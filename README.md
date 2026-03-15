@@ -1,44 +1,62 @@
 # Citizen Registry REST API
 
-This project implements a RESTful service for managing a citizen registry.
+![CI](https://github.com/anpapaniko-code/atlas-registry/actions/workflows/ci.yml/badge.svg)
 
-The application was developed as part of the course:
-Continuous Integration / Continuous Delivery (CI/CD).
+This repository contains a RESTful service for managing a citizen registry.
 
-## Technologies
+The project was developed as part of the course:
+
+**Continuous Integration / Continuous Delivery (CI/CD)**
+
+---
+
+# Project Structure
+
+The project follows a **multi-module Maven architecture**.
+
+### atlas-domain
+Contains the domain model and entity classes.
+
+### citizen-registry-service
+Implements the REST API and the business logic.
+
+### citizen-registry-client
+Client module used to access the REST service.
+
+---
+
+# Technologies
 
 - Java 17
 - Spring Boot
 - Maven
 - Git
+- GitHub
 - GitHub Actions
 
-## Project Structure
+---
 
-atlas-domain  
-Contains domain model and entity classes.
+# Continuous Integration Pipeline
 
-citizen-registry-service  
-Implements the REST API and business logic.
+The project includes a **CI pipeline implemented with GitHub Actions**.
 
-citizen-registry-client  
-Client module for accessing the REST service.
-
-## CI/CD Pipeline
-
-The project includes a Continuous Integration pipeline implemented using GitHub Actions.
+The pipeline is automatically triggered whenever a commit is pushed to the **develop** branch.
 
 Pipeline steps:
 
 1. Checkout repository
 2. Setup Java 17
-3. Compile the project using Maven
+3. Compile source code
 4. Execute unit tests
-5. Execute integration tests
+5. Execute API / integration tests
 6. Upload test reports as artifacts
 
-The pipeline is automatically triggered on commits to the **develop** branch.
+This ensures that every change committed to the develop branch is automatically built and tested.
 
-## Repository
+---
+
+# Repository
+
+GitHub repository:
 
 https://github.com/anpapaniko-code/atlas-registry
