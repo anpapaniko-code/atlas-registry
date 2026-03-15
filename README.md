@@ -6,26 +6,32 @@ This repository contains a RESTful service for managing a citizen registry.
 
 The project was developed as part of the course:
 
-**Continuous Integration / Continuous Delivery (CI/CD)**
+Continuous Integration / Continuous Delivery (CI/CD)
 
 ---
 
 # Project Structure
 
-The project follows a **multi-module Maven architecture**.
+The project follows a multi-module Maven architecture.
+
+atlas-registry  
+│  
+├── atlas-domain  
+├── citizen-registry-service  
+└── citizen-registry-client
 
 ### atlas-domain
-Contains the domain model and entity classes.
+Contains the domain model and entity classes used by the application.
 
 ### citizen-registry-service
-Implements the REST API and the business logic.
+Implements the REST API and the business logic of the citizen registry.
 
 ### citizen-registry-client
-Client module used to access the REST service.
+Client module used to access and interact with the REST service.
 
 ---
 
-# Technologies
+# Technologies Used
 
 - Java 17
 - Spring Boot
@@ -38,9 +44,9 @@ Client module used to access the REST service.
 
 # Continuous Integration Pipeline
 
-The project includes a **CI pipeline implemented with GitHub Actions**.
+This project includes a CI pipeline implemented with GitHub Actions.
 
-The pipeline is automatically triggered whenever a commit is pushed to the **develop** branch.
+The pipeline is automatically triggered whenever a commit is pushed to the develop branch.
 
 Pipeline steps:
 
@@ -52,6 +58,14 @@ Pipeline steps:
 6. Upload test reports as artifacts
 
 This ensures that every change committed to the develop branch is automatically built and tested.
+
+---
+
+# Test Reports
+
+Test reports generated during the CI pipeline execution are uploaded as GitHub Actions artifacts.
+
+The reports are produced by Maven Surefire and contain detailed results for all executed tests.
 
 ---
 
