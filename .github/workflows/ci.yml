@@ -5,6 +5,9 @@ on:
     branches:
       - develop
 
+permissions:
+  contents: write
+
 jobs:
   build-test:
     name: Build and Test
@@ -38,3 +41,34 @@ jobs:
             **/target/failsafe-reports/*.xml
           if-no-files-found: warn
           retention-days: 7
+
+      - name: Upload executable JAR
+        if: success()
+        uses: actions/upload-artifact@v4
+        with:
+          name: executable-jar
+          path: citizen-registry-service/target/*.jar
+          if-no-files-found: error
+          retention-days: 7
+
+  release:
+    name: Publish Early Release
+    needs: build-test
+    runs-on: ubuntu-latest
+    if: success()
+
+    steps:
+      - name: Download executable JAR
+        uses: actions/download-artifact@v4
+        with:
+          name: executable-jar
+          path: release-files
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: early-release-${{ github.run_number }}
+          name: Early Release ${{ github.run_number }}
+          prerelease: true
+          generate_release_notes: true
+          files: release-files/*.jar
