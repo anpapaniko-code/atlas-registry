@@ -34,7 +34,7 @@ public class AtlasCitizen {
 
     @Column(name = "birth_date", nullable = false)
     @NotNull
-    @JsonFormat(pattern = "dd-MM-yyyy")   // 👈 important
+    @JsonFormat(pattern = "dd-MM-yyyy")
     private LocalDate birthDate;
 
     @Column(name = "afm", length = 9)
