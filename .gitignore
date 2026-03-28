@@ -15,3 +15,13 @@ target/
 # OS
 .DS_Store
 Thumbs.db
+
+# Terraform
+.terraform/
+*.tfstate
+*.tfstate.*
+terraform.tfvars
+
+# AWS
+*.pem
+
