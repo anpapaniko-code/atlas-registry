@@ -12,6 +12,10 @@ if [ -z "$DB_HOST" ] || [ -z "$DB_PORT" ] || [ -z "$DB_NAME" ] || [ -z "$DB_USER
   exit 1
 fi
 
+echo "[INFO] Installing curl for local checks..."
+sudo apt-get update -y || true
+sudo apt-get install -y curl || true
+
 echo "[INFO] Configuring application runtime..."
 
 sudo tee /etc/systemd/system/citizen-registry.service > /dev/null <<EOF
@@ -47,5 +51,23 @@ sudo systemctl daemon-reload
 echo "[INFO] Enabling and starting application..."
 sudo systemctl enable citizen-registry
 sudo systemctl restart citizen-registry
+
+echo "[INFO] Waiting 20 seconds before diagnostics..."
+sleep 20
+
+echo "[INFO] ===== SYSTEMCTL STATUS ====="
+sudo systemctl status citizen-registry --no-pager || true
+
+echo "[INFO] ===== JOURNAL ====="
+sudo journalctl -u citizen-registry -n 200 --no-pager || true
+
+echo "[INFO] ===== PORT CHECK ====="
+sudo ss -tulpen | grep 8080 || true
+
+echo "[INFO] ===== LOCAL HEALTH CHECK ====="
+curl -i http://localhost:8080/health || true
+
+echo "[INFO] ===== LOCAL API CHECK ====="
+curl -i http://localhost:8080/api/citizens || true
 
 echo "[INFO] Application runtime configuration completed successfully."
