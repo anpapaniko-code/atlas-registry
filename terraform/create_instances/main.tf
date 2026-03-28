@@ -178,8 +178,13 @@ resource "aws_lb_target_group" "app_tg" {
   vpc_id   = var.vpc_id
 
   health_check {
-    path = "/"
-    port = var.app_port
+    path                = "/api/citizens"
+    port                = var.app_port
+    protocol            = "HTTP"
+    matcher             = "200"
+    healthy_threshold   = 3
+    unhealthy_threshold = 3
+    interval            = 30
   }
 }
 
