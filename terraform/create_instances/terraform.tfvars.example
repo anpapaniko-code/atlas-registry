@@ -1,0 +1,37 @@
+aws_region = "eu-central-1"
+
+project_name = "atlas-registry"
+
+vpc_id = "vpc-xxxxxxxx"
+
+public_subnet_ids = [
+  "subnet-aaaaaaaa",
+  "subnet-bbbbbbbb"
+]
+
+app_subnet_ids = [
+  "subnet-aaaaaaaa",
+  "subnet-bbbbbbbb",
+  "subnet-cccccccc"
+]
+
+db_subnet_id = "subnet-aaaaaaaa"
+
+key_name         = "my-keypair"
+allowed_ssh_cidr = "1.2.3.4/32"
+
+app_instance_type = "t2.micro"
+db_instance_type  = "t2.micro"
+
+app_ami_id = "ami-xxxxxxxx"
+db_ami_id  = "ami-yyyyyyyy"
+
+app_port = 8080
+db_port  = 3306
+
+db_name     = "citizen_registry"
+db_username = "citizen_user"
+db_password = "change_me"
+
+github_repo_url = "https://github.com/YOUR_USERNAME/atlas-registry.git"
+github_branch   = "main"

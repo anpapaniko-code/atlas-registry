@@ -1,0 +1,17 @@
+aws_region        = "eu-central-1"
+project_name      = "atlas-registry"
+
+vpc_id            = "vpc-xxxxxxxx"
+public_subnet_id  = "subnet-xxxxxxxx"
+
+key_name          = "my-keypair"
+allowed_ssh_cidr  = "1.2.3.4/32"
+
+app_instance_type = "t2.micro"
+db_instance_type  = "t2.micro"
+
+github_repo_url   = "https://github.com/YOUR_USERNAME/atlas-registry.git"
+github_branch     = "main"
+
+app_image_name    = "atlas-registry-app-image"
+db_image_name     = "atlas-registry-db-image"
