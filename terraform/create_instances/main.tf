@@ -110,12 +110,22 @@ resource "aws_instance" "database" {
   key_name                    = var.key_name
   associate_public_ip_address = true
 
+  user_data_replace_on_change = true
+
   user_data = <<-EOF
     #!/bin/bash
-    apt-get update -y
-    apt-get install -y git
+    set -euxo pipefail
+    export DEBIAN_FRONTEND=noninteractive
+
+    sudo dpkg --configure -a || true
+
+    if ! command -v git >/dev/null 2>&1; then
+      sudo apt-get update -y || true
+      sudo apt-get install -y git || true
+    fi
 
     cd /home/ubuntu
+    rm -rf project
     git clone --branch ${var.github_branch} ${var.github_repo_url} project
 
     chmod +x project/terraform/scripts/configure_db_runtime.sh
@@ -144,23 +154,33 @@ resource "aws_instance" "application" {
   key_name                    = var.key_name
   associate_public_ip_address = true
 
-  user_data = <<-EOF
-    #!/bin/bash
-    apt-get update -y
-    apt-get install -y git
+    user_data_replace_on_change = true
 
-    cd /home/ubuntu
-    git clone --branch ${var.github_branch} ${var.github_repo_url} project
+    user_data = <<-EOF
+      #!/bin/bash
+      set -euxo pipefail
+      export DEBIAN_FRONTEND=noninteractive
 
-    chmod +x project/terraform/scripts/configure_app_runtime.sh
+      sudo dpkg --configure -a || true
 
-    bash project/terraform/scripts/configure_app_runtime.sh \
-      ${aws_instance.database.private_ip} \
-      ${var.db_port} \
-      ${var.db_name} \
-      ${var.db_username} \
-      ${var.db_password}
-  EOF
+      if ! command -v git >/dev/null 2>&1; then
+        sudo apt-get update -y || true
+        sudo apt-get install -y git curl || true
+      fi
+
+      cd /home/ubuntu
+      rm -rf project
+      git clone --branch ${var.github_branch} ${var.github_repo_url} project
+
+      chmod +x project/terraform/scripts/configure_app_runtime.sh
+
+      bash project/terraform/scripts/configure_app_runtime.sh \
+        ${aws_instance.database.private_ip} \
+        ${var.db_port} \
+        ${var.db_name} \
+        ${var.db_username} \
+        ${var.db_password}
+    EOF
 
   tags = {
     Name = "${var.project_name}-app-${count.index}"
