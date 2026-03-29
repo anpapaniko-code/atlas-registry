@@ -1,11 +1,16 @@
 #!/bin/bash
-set -e
+set -euxo pipefail
+
+export DEBIAN_FRONTEND=noninteractive
+
+echo "[INFO] Fixing interrupted dpkg state if needed..."
+sudo dpkg --configure -a || true
 
 echo "[INFO] Updating package index..."
 sudo apt-get update -y
 
-echo "[INFO] Installing Java 17 and Maven..."
-sudo apt-get install -y openjdk-17-jdk maven
+echo "[INFO] Installing Java 17, Maven and Git..."
+sudo apt-get install -y openjdk-17-jdk maven git
 
 echo "[INFO] Checking project directory..."
 if [ ! -d "/home/ubuntu/project" ]; then
@@ -16,17 +21,34 @@ fi
 cd /home/ubuntu/project
 
 echo "[INFO] Building multi-module Maven project..."
-sudo mvn clean package -DskipTests
+mvn -B -ntp clean package -DskipTests
 
-JAR_FILE="/home/ubuntu/project/citizen-registry-service/target/citizen-registry-service-1.0.0.jar"
+echo "[INFO] Locating executable application jar..."
+JAR_FILE=$(find /home/ubuntu/project/citizen-registry-service/target \
+  -maxdepth 1 \
+  -type f \
+  -name "*.jar" \
+  ! -name "*.original" | head -n 1)
 
-if [ ! -f "$JAR_FILE" ]; then
-  echo "[ERROR] Expected jar not found at $JAR_FILE"
+if [ -z "${JAR_FILE}" ]; then
+  echo "[ERROR] No application jar found under citizen-registry-service/target"
+  ls -la /home/ubuntu/project/citizen-registry-service/target || true
   exit 1
 fi
 
+echo "[INFO] Found jar: ${JAR_FILE}"
+
+echo "[INFO] Preparing /opt directory..."
+sudo mkdir -p /opt
+
 echo "[INFO] Copying application jar to /opt/app.jar..."
-sudo cp "$JAR_FILE" /opt/app.jar
+sudo cp "${JAR_FILE}" /opt/app.jar
+sudo chown ubuntu:ubuntu /opt/app.jar
+sudo chmod 644 /opt/app.jar
+
+echo "[INFO] Verifying installed jar..."
+ls -l /opt/app.jar
+java -version
 
 echo "[INFO] Creating systemd service..."
 
