@@ -45,6 +45,11 @@ variable "github_repo_url" {
   type        = string
 }
 
+variable "private_key_path" {
+  description = "Path to SSH private key"
+  type        = string
+}
+
 variable "github_branch" {
   description = "Git branch to clone"
   type        = string
