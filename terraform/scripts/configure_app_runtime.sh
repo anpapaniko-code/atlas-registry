@@ -7,48 +7,51 @@ DB_NAME="${3}"
 DB_USER="${4}"
 DB_PASSWORD="${5}"
 
-if [ -z "$DB_HOST" ] || [ -z "$DB_PORT" ] || [ -z "$DB_NAME" ] || [ -z "$DB_USER" ] || [ -z "$DB_PASSWORD" ]; then
-  echo "[ERROR] Usage: $0 <db_host> <db_port> <db_name> <db_user> <db_password>"
+export DEBIAN_FRONTEND=noninteractive
+
+echo "[INFO] Fixing any interrupted dpkg state..."
+sudo dpkg --configure -a || true
+
+echo "[INFO] Ensuring git exists..."
+if ! command -v git >/dev/null 2>&1; then
+  sudo apt-get update -y
+  sudo apt-get install -y git
+fi
+
+echo "[INFO] Ensuring curl exists..."
+if ! command -v curl >/dev/null 2>&1; then
+  sudo apt-get update -y
+  sudo apt-get install -y curl
+fi
+
+echo "[INFO] Checking app artifacts..."
+if [ ! -f "/opt/app.jar" ]; then
+  echo "[ERROR] /opt/app.jar not found"
+  ls -la /opt || true
   exit 1
 fi
 
-echo "[INFO] Installing curl for local checks..."
-sudo apt-get update -y || true
-sudo apt-get install -y curl || true
+if [ ! -f "/etc/systemd/system/citizen-registry.service" ]; then
+  echo "[ERROR] /etc/systemd/system/citizen-registry.service not found"
+  exit 1
+fi
 
-echo "[INFO] Configuring application runtime..."
-
-sudo tee /etc/systemd/system/citizen-registry.service > /dev/null <<EOF
-[Unit]
-Description=Citizen Registry Spring Boot Application
-After=network.target
-
-[Service]
-User=ubuntu
-WorkingDirectory=/opt
-
-Environment=SPRING_DATASOURCE_URL=jdbc:mysql://${DB_HOST}:${DB_PORT}/${DB_NAME}
-Environment=SPRING_DATASOURCE_USERNAME=${DB_USER}
-Environment=SPRING_DATASOURCE_PASSWORD=${DB_PASSWORD}
-Environment=SPRING_DATASOURCE_DRIVER_CLASS_NAME=com.mysql.cj.jdbc.Driver
-Environment=SPRING_JPA_DATABASE_PLATFORM=org.hibernate.dialect.MySQLDialect
-Environment=SPRING_JPA_HIBERNATE_DDL_AUTO=update
-Environment=SPRING_H2_CONSOLE_ENABLED=false
-
-ExecStart=/usr/bin/java -jar /opt/app.jar
-SuccessExitStatus=143
-Restart=always
-RestartSec=5
-
-[Install]
-WantedBy=multi-user.target
+echo "[INFO] Writing runtime environment file..."
+sudo tee /etc/default/citizen-registry > /dev/null <<EOF
+SPRING_DATASOURCE_URL=jdbc:mysql://${DB_HOST}:${DB_PORT}/${DB_NAME}
+SPRING_DATASOURCE_USERNAME=${DB_USER}
+SPRING_DATASOURCE_PASSWORD=${DB_PASSWORD}
+SPRING_DATASOURCE_DRIVER_CLASS_NAME=com.mysql.cj.jdbc.Driver
+SPRING_JPA_DATABASE_PLATFORM=org.hibernate.dialect.MySQLDialect
+SPRING_JPA_HIBERNATE_DDL_AUTO=update
+SPRING_H2_CONSOLE_ENABLED=false
 EOF
 
 echo "[INFO] Reloading systemd..."
 sudo systemctl daemon-reexec
 sudo systemctl daemon-reload
 
-echo "[INFO] Enabling and starting application..."
+echo "[INFO] Enabling and restarting application..."
 sudo systemctl enable citizen-registry
 sudo systemctl restart citizen-registry
 
@@ -62,12 +65,12 @@ echo "[INFO] ===== JOURNAL ====="
 sudo journalctl -u citizen-registry -n 200 --no-pager || true
 
 echo "[INFO] ===== PORT CHECK ====="
-sudo ss -tulpen | grep 8080 || true
+sudo ss -ltnp | grep 8080 || true
 
 echo "[INFO] ===== LOCAL HEALTH CHECK ====="
-curl -i http://localhost:8080/health || true
+curl -v http://localhost:8080/health || true
 
 echo "[INFO] ===== LOCAL API CHECK ====="
-curl -i http://localhost:8080/api/citizens || true
+curl -v http://localhost:8080/api/citizens || true
 
 echo "[INFO] Application runtime configuration completed successfully."
