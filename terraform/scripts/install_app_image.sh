@@ -1,6 +1,8 @@
 #!/bin/bash
 set -e
 
+export DEBIAN_FRONTEND=noninteractive
+
 echo "[INFO] Updating package index..."
 sudo apt-get update -y
 
@@ -21,12 +23,16 @@ cd /home/ubuntu/project
 echo "[INFO] Building multi-module Maven project..."
 sudo mvn clean package -DskipTests
 
-JAR_FILE="/home/ubuntu/project/citizen-registry-service/target/citizen-registry-service-1.0.0.jar"
+echo "[INFO] Locating built application jar..."
+JAR_FILE=$(find /home/ubuntu/project/citizen-registry-service/target -maxdepth 1 -type f -name "*.jar" ! -name "*sources.jar" ! -name "*javadoc.jar" | head -n 1)
 
-if [ ! -f "$JAR_FILE" ]; then
-  echo "[ERROR] Expected jar not found at $JAR_FILE"
+if [ -z "$JAR_FILE" ]; then
+  echo "[ERROR] No application jar found in /home/ubuntu/project/citizen-registry-service/target"
+  ls -la /home/ubuntu/project/citizen-registry-service/target || true
   exit 1
 fi
+
+echo "[INFO] Found jar: $JAR_FILE"
 
 echo "[INFO] Preparing /opt/app.jar..."
 sudo mkdir -p /opt
@@ -34,7 +40,6 @@ sudo cp "$JAR_FILE" /opt/app.jar
 sudo chmod 644 /opt/app.jar
 
 echo "[INFO] Creating systemd service..."
-
 sudo tee /etc/systemd/system/citizen-registry.service > /dev/null <<'EOF'
 [Unit]
 Description=Citizen Registry Spring Boot Application
@@ -70,8 +75,8 @@ sudo systemctl daemon-reload
 sudo systemctl enable citizen-registry
 
 echo "[INFO] Verifying installed files..."
-ls -l /opt/app.jar
-ls -l /etc/systemd/system/citizen-registry.service
-ls -l /etc/default/citizen-registry
+sudo ls -l /opt/app.jar
+sudo ls -l /etc/systemd/system/citizen-registry.service
+sudo ls -l /etc/default/citizen-registry
 
 echo "[INFO] Application image preparation completed successfully."
