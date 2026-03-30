@@ -1,5 +1,5 @@
 #!/bin/bash
-set -e
+set -euo pipefail
 
 export DEBIAN_FRONTEND=noninteractive
 
@@ -24,10 +24,16 @@ echo "[INFO] Building multi-module Maven project..."
 sudo mvn clean package -DskipTests
 
 echo "[INFO] Locating built application jar..."
-JAR_FILE=$(find /home/ubuntu/project/citizen-registry-service/target -maxdepth 1 -type f -name "*.jar" ! -name "*sources.jar" ! -name "*javadoc.jar" | head -n 1)
+JAR_FILE=$(find /home/ubuntu/project/citizen-registry-service/target \
+  -maxdepth 1 \
+  -type f \
+  -name "*.jar" \
+  ! -name "*.original" \
+  ! -name "*sources.jar" \
+  ! -name "*javadoc.jar" | head -n 1)
 
-if [ -z "$JAR_FILE" ]; then
-  echo "[ERROR] No application jar found in /home/ubuntu/project/citizen-registry-service/target"
+if [ -z "${JAR_FILE:-}" ]; then
+  echo "[ERROR] No runnable application jar found in /home/ubuntu/project/citizen-registry-service/target"
   ls -la /home/ubuntu/project/citizen-registry-service/target || true
   exit 1
 fi
@@ -37,7 +43,13 @@ echo "[INFO] Found jar: $JAR_FILE"
 echo "[INFO] Preparing /opt/app.jar..."
 sudo mkdir -p /opt
 sudo cp "$JAR_FILE" /opt/app.jar
+sudo chown root:root /opt/app.jar
 sudo chmod 644 /opt/app.jar
+
+if [ ! -f "/opt/app.jar" ]; then
+  echo "[ERROR] /opt/app.jar was not created successfully"
+  exit 1
+fi
 
 echo "[INFO] Creating systemd service..."
 sudo tee /etc/systemd/system/citizen-registry.service > /dev/null <<'EOF'
