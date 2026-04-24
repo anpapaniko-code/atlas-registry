@@ -1,0 +1,9 @@
+.git
+**/.git
+**/.idea
+**/*.iml
+**/target
+**/.DS_Store
+atlas-registry-key.pem
+registrydb.mv.db
+README.md

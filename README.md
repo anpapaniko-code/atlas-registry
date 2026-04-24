@@ -84,3 +84,139 @@ This demonstrates an early stage of continuous delivery.
 GitHub repository:
 
 https://github.com/anpapaniko-code/atlas-registry
+
+
+---
+
+##  Cloud Infrastructure Automation (Terraform)
+
+As part of the Cloud Computing assignment, the project has been extended to support **Infrastructure as Code (IaC)** using **Terraform (HCL)**.
+
+The deployment process is fully automated and consists of three phases:
+
+---
+
+##  Architecture
+
+```
+                    +----------------------+
+                    |   Load Balancer      |
+                    |  (AWS ALB - HTTP)    |
+                    +----------+-----------+
+                               |
+        -------------------------------------------------
+        |                   |                   |
++---------------+   +---------------+   +---------------+
+| App Instance  |   | App Instance  |   | App Instance  |
+| Spring Boot   |   | Spring Boot   |   | Spring Boot   |
++-------+-------+   +-------+-------+   +-------+-------+
+        \               |               /
+         \              |              /
+          --------------------------------
+                          |
+                +---------------------+
+                |   Database (MySQL)  |
+                |    EC2 Instance     |
+                +---------------------+
+```
+
+---
+
+##  Infrastructure Phases
+
+### 1. Preparation Phase
+
+Creation of custom virtual machine images (AMIs) for:
+
+* Application
+* Database
+
+Implemented using:
+
+```
+terraform/create_images
+```
+
+---
+
+### 2. Execution Phase
+
+Deployment of the full infrastructure:
+
+* 1 Database instance
+* 3 Application instances
+* Load Balancer (AWS ALB)
+* Target Group with health checks
+* Security Groups controlling communication
+
+Implemented using:
+
+```
+terraform/create_instances
+```
+
+Application instances connect to the database using private networking.
+
+---
+
+### 3. Destroy Phase
+
+The infrastructure can be completely removed using:
+
+```bash
+terraform destroy
+```
+
+---
+
+##  Terraform Structure
+
+```
+terraform/
+├── create_images/
+├── create_instances/
+└── scripts/
+```
+
+The `scripts` directory contains provisioning scripts used during image creation and runtime configuration.
+
+---
+
+##  Verification
+
+The deployment was validated successfully:
+
+### ✔ Health Check
+
+The `/health` endpoint returns `OK`, confirming that the application is running correctly behind the load balancer.
+
+### ✔ Application Endpoint
+
+The `/api/citizens` endpoint returns an empty list (`[]`), confirming successful communication between the application and the database.
+
+### ✔ Load Balancer
+
+All application instances are marked as **healthy** in the target group.
+
+---
+
+##  Notes
+
+* AWS credentials and private keys are not included in this repository
+* Terraform variables should be configured via `terraform.tfvars` or environment variables
+* The infrastructure is fully reproducible using Terraform CLI
+
+---
+
+##  Assignment Coverage
+
+This implementation fully satisfies the assignment requirements:
+
+* Infrastructure models defined in HCL ✔
+* Automated preparation phase (image creation) ✔
+* Automated execution phase (deployment) ✔
+* Load balancing with multiple application instances ✔
+* Secure communication between components ✔
+* Infrastructure destruction ✔
+
+---
