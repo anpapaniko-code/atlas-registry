@@ -1,0 +1,68 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: citizen-registry-db
+  namespace: citizen-registry
+  labels:
+    app.kubernetes.io/name: citizen-registry-db
+    app.kubernetes.io/component: database
+    app.kubernetes.io/part-of: citizen-registry-backend
+spec:
+  serviceName: citizen-registry-db
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: citizen-registry-db
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: citizen-registry-db
+        app.kubernetes.io/component: database
+        app.kubernetes.io/part-of: citizen-registry-backend
+    spec:
+      securityContext:
+        fsGroup: 999
+      containers:
+        - name: mysql
+          image: mysql:8.0
+          imagePullPolicy: IfNotPresent
+          ports:
+            - name: mysql
+              containerPort: 3306
+          envFrom:
+            - secretRef:
+                name: citizen-registry-db-secret
+          volumeMounts:
+            - name: mysql-data
+              mountPath: /var/lib/mysql
+          readinessProbe:
+            exec:
+              command:
+                - /bin/sh
+                - -c
+                - mysqladmin ping -h 127.0.0.1 -u"$MYSQL_USER" -p"$MYSQL_PASSWORD" --silent
+            initialDelaySeconds: 20
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 10
+          livenessProbe:
+            exec:
+              command:
+                - /bin/sh
+                - -c
+                - mysqladmin ping -h 127.0.0.1 -u"$MYSQL_USER" -p"$MYSQL_PASSWORD" --silent
+            initialDelaySeconds: 60
+            periodSeconds: 20
+            timeoutSeconds: 5
+            failureThreshold: 5
+          resources:
+            requests:
+              cpu: 100m
+              memory: 512Mi
+            limits:
+              cpu: 500m
+              memory: 1Gi
+      volumes:
+        - name: mysql-data
+          persistentVolumeClaim:
+            claimName: citizen-registry-db-data
